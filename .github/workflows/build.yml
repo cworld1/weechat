@@ -7,9 +7,7 @@ on:
   pull_request:
 
 jobs:
-  # -------------------------------------------------
-  # Linux – Ubuntu 24.04 (Debian bookworm)
-  # -------------------------------------------------
+  # ------------------- Linux -------------------
   ubuntu:
     runs-on: ubuntu-24.04
     steps:
@@ -36,13 +34,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
             -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_SHARED_PLUGINS=OFF \
             -DENABLE_STATIC=ON \
             -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
             -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF \
-            -DENABLE_PLUGIN_CHARSET=OFF -DENABLE_PLUGIN_SCRIPT=OFF \
-            -DENABLE_PLUGIN_TRIGGER=OFF
+            -DENABLE_PLUGIN_BUFLIST=OFF -DENABLE_PLUGIN_CHARSET=OFF \
+            -DENABLE_PLUGIN_SCRIPT=OFF -DENABLE_PLUGIN_TRIGGER=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF
           make -j$(nproc)
           make install
 
@@ -59,9 +56,7 @@ jobs:
           name: weechat-linux
           path: $HOME/.local/bin/weechat-linux.tar.gz
 
-  # -------------------------------------------------
-  # Windows – MSYS2 (MinGW‑64)
-  # -------------------------------------------------
+  # ------------------- Windows -------------------
   msys2:
     runs-on: windows-latest
     defaults:
@@ -86,6 +81,8 @@ jobs:
             mingw-w64-x86_64-cjson
             mingw-w64-x86_64-gettext
             mingw-w64-x86_64-ruby
+            mingw-w64-x86_64-winpthreads
+            mingw-w64-x86_64-headers
             base-devel git
 
       - name: Build static WeeChat (Windows)
@@ -93,7 +90,6 @@ jobs:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
         run: |
-          # 使用 MSYS2/MinGW‑64 的 Makefiles 生成器
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
@@ -101,13 +97,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
             -DBUILD_SHARED_LIBS=OFF \
-            -DBUILD_SHARED_PLUGINS=OFF \
             -DENABLE_STATIC=ON \
             -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
             -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF \
-            -DENABLE_PLUGIN_CHARSET=OFF -DENABLE_PLUGIN_SCRIPT=OFF \
-            -DENABLE_PLUGIN_TRIGGER=OFF
+            -DENABLE_PLUGIN_BUFLIST=OFF -DENABLE_PLUGIN_CHARSET=OFF \
+            -DENABLE_PLUGIN_SCRIPT=OFF -DENABLE_PLUGIN_TRIGGER=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF
           make -j$(nproc)
           make install
 
