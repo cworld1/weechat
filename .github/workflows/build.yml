@@ -1,4 +1,4 @@
-# .github/workflows/build-weechat.yml
+# .github/workflows/build‑weechat.yml
 name: Build static WeeChat (Linux & Windows)
 
 on:
@@ -7,7 +7,9 @@ on:
   pull_request:
 
 jobs:
-  # ------------------- Linux -------------------
+  # -------------------------------------------------
+  # Linux – Ubuntu 24.04 (Debian Bookworm)
+  # -------------------------------------------------
   ubuntu:
     runs-on: ubuntu-24.04
     steps:
@@ -18,7 +20,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y \
             build-essential cmake pkg-config \
-            libncurses-dev libcurl4-openssl-dev libgcrypt20-dev \
+            libncurses-dev libcurl4-gnutls-dev libgcrypt20-dev \
             libgnutls28-dev zlib1g-dev libtool libcjson-dev \
             gettext tcl-dev tk-dev php-dev libperl-dev git
 
@@ -37,9 +39,12 @@ jobs:
             -DENABLE_STATIC=ON \
             -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
             -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_BUFLIST=OFF -DENABLE_PLUGIN_CHARSET=OFF \
-            -DENABLE_PLUGIN_SCRIPT=OFF -DENABLE_PLUGIN_TRIGGER=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF
+            -DENABLE_PLUGIN_BUFLIST=OFF \
+            -DENABLE_PLUGIN_CHARSET=OFF \
+            -DENABLE_PLUGIN_SCRIPT=OFF \
+            -DENABLE_PLUGIN_TRIGGER=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF \
+            -DENABLE_PLUGIN_BUFFERS=OFF
           make -j$(nproc)
           make install
 
@@ -56,7 +61,9 @@ jobs:
           name: weechat-linux
           path: $HOME/.local/bin/weechat-linux.tar.gz
 
-  # ------------------- Windows -------------------
+  # -------------------------------------------------
+  # Windows – MSYS2 (POSIX layer, not MinGW)
+  # -------------------------------------------------
   msys2:
     runs-on: windows-latest
     defaults:
@@ -65,27 +72,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install MSYS2 packages
+      # Install the POSIX toolchain (gcc, make, etc.) inside the MSYS environment
+      - name: Install MSYS2 packages (POSIX toolchain)
         uses: msys2/setup-msys2@v2
         with:
+          msystem: MSYS
           install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-pkgconf
-            mingw-w64-x86_64-ncurses
-            mingw-w64-x86_64-curl
-            mingw-w64-x86_64-libgcrypt
-            mingw-w64-x86_64-gnutls
-            mingw-w64-x86_64-zlib
-            mingw-w64-x86_64-libtool
-            mingw-w64-x86_64-cjson
-            mingw-w64-x86_64-gettext
-            mingw-w64-x86_64-ruby
-            mingw-w64-x86_64-winpthreads
-            mingw-w64-x86_64-headers
-            base-devel git
+            base-devel          # gcc, make, autoconf, …
+            gcc
+            cmake
+            pkgconf
+            ncurses
+            curl
+            libgcrypt
+            gnutls
+            zlib
+            libtool
+            cjson
+            gettext
+            ruby
+            git
 
-      - name: Build static WeeChat (Windows)
+      - name: Build static WeeChat (Windows / MSYS2)
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -100,9 +108,12 @@ jobs:
             -DENABLE_STATIC=ON \
             -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
             -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_BUFLIST=OFF -DENABLE_PLUGIN_CHARSET=OFF \
-            -DENABLE_PLUGIN_SCRIPT=OFF -DENABLE_PLUGIN_TRIGGER=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF
+            -DENABLE_PLUGIN_BUFLIST=OFF \
+            -DENABLE_PLUGIN_CHARSET=OFF \
+            -DENABLE_PLUGIN_SCRIPT=OFF \
+            -DENABLE_PLUGIN_TRIGGER=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF \
+            -DENABLE_PLUGIN_BUFFERS=OFF
           make -j$(nproc)
           make install
 
