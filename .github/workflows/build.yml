@@ -1,4 +1,5 @@
-name: Build static WeeChat
+# .github/workflows/build-weechat.yml
+name: Build static WeeChat (Linux & Windows)
 
 on:
   push:
@@ -6,6 +7,74 @@ on:
   pull_request:
 
 jobs:
+  # -------------------------------------------------
+  # Linux (Ubuntu 24.04 – Debian Bookworm)
+  # -------------------------------------------------
+  ubuntu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ubuntu dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            pkg-config \
+            libncurses-dev \
+            libcurl4-openssl-dev \
+            libgcrypt20-dev \
+            libgnutls28-dev \
+            zlib1g-dev \
+            libtool \
+            libcjson-dev \
+            gettext \
+            tcl-dev \
+            tk-dev \
+            php-dev \
+            libperl-dev \
+            git
+
+      - name: Build static WeeChat
+        env:
+          CFLAGS: "-static -O2"
+          LDFLAGS: "-static"
+        run: |
+          git clone https://github.com/weechat/weechat.git
+          cd weechat
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
+            -DENABLE_STATIC=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF \
+            -DENABLE_ALIAS=OFF \
+            -DENABLE_PERL=OFF \
+            -DENABLE_PHP=OFF \
+            -DENABLE_TCL=OFF \
+            -DENABLE_TK=OFF
+          make -j$(nproc)
+          make install
+
+      - name: Archive binary
+        if: always()
+        run: |
+          cd $HOME/.local/bin
+          tar -czf weechat-ubuntu.tar.gz weechat
+
+      - name: Upload Ubuntu artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weechat-ubuntu
+          path: $HOME/.local/bin/weechat-ubuntu.tar.gz
+
+  # -------------------------------------------------
+  # Windows (MSYS2)
+  # -------------------------------------------------
   msys2:
     runs-on: windows-latest
     defaults:
@@ -45,10 +114,14 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
             -DENABLE_STATIC=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF \
+            -DENABLE_ALIAS=OFF \
             -DENABLE_PERL=OFF \
             -DENABLE_PHP=OFF \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF
+            -DENABLE_TCL=OFF \
+            -DENABLE_TK=OFF
           make -j$(nproc)
           make install
 
@@ -58,63 +131,9 @@ jobs:
           cd $HOME/.local/bin
           tar -czf weechat-msys2.tar.gz weechat
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload MSYS2 artefact
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: weechat-msys2
           path: $HOME/.local/bin/weechat-msys2.tar.gz
-
-  ubuntu:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Ubuntu dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            pkg-config \
-            libncurses5-dev \
-            libcurl4-openssl-dev \
-            libgcrypt20-dev \
-            libgnutls28-dev \
-            zlib1g-dev \
-            libtool \
-            libcjson-dev \
-            gettext \
-            tcl-dev \
-            tk-dev \
-            git
-
-      - name: Build static WeeChat
-        env:
-          CFLAGS: "-static -O2"
-          LDFLAGS: "-static"
-        run: |
-          git clone https://github.com/weechat/weechat.git
-          cd weechat
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DENABLE_STATIC=ON \
-            -DENABLE_PERL=OFF \
-            -DENABLE_PHP=OFF \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF
-          make -j$(nproc)
-          make install
-
-      - name: Archive binary
-        if: always()
-        run: |
-          cd $HOME/.local/bin
-          tar -czf weechat-ubuntu.tar.gz weechat
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: weechat-ubuntu
-          path: $HOME/.local/bin/weechat-ubuntu.tar.gz
