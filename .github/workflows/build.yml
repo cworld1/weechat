@@ -8,7 +8,7 @@ on:
 
 jobs:
   # -------------------------------------------------
-  # Linux (Ubuntu 24.04 – Debian Bookworm)
+  # Linux – Ubuntu 24.04 (Debian bookworm)
   # -------------------------------------------------
   ubuntu:
     runs-on: ubuntu-24.04
@@ -19,24 +19,12 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y \
-            build-essential \
-            cmake \
-            pkg-config \
-            libncurses-dev \
-            libcurl4-openssl-dev \
-            libgcrypt20-dev \
-            libgnutls28-dev \
-            zlib1g-dev \
-            libtool \
-            libcjson-dev \
-            gettext \
-            tcl-dev \
-            tk-dev \
-            php-dev \
-            libperl-dev \
-            git
+            build-essential cmake pkg-config \
+            libncurses-dev libcurl4-openssl-dev libgcrypt20-dev \
+            libgnutls28-dev zlib1g-dev libtool libcjson-dev \
+            gettext tcl-dev tk-dev php-dev libperl-dev git
 
-      - name: Build static WeeChat
+      - name: Build static WeeChat (Linux)
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -47,33 +35,32 @@ jobs:
           cmake .. \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DENABLE_STATIC=ON \
             -DBUILD_SHARED_LIBS=OFF \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF \
-            -DENABLE_ALIAS=OFF \
-            -DENABLE_PERL=OFF \
-            -DENABLE_PHP=OFF \
-            -DENABLE_TCL=OFF \
-            -DENABLE_TK=OFF
+            -DBUILD_SHARED_PLUGINS=OFF \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
+            -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF \
+            -DENABLE_PLUGIN_CHARSET=OFF -DENABLE_PLUGIN_SCRIPT=OFF \
+            -DENABLE_PLUGIN_TRIGGER=OFF
           make -j$(nproc)
           make install
 
-      - name: Archive binary
+      - name: Archive Linux binary
         if: always()
         run: |
           cd $HOME/.local/bin
-          tar -czf weechat-ubuntu.tar.gz weechat
+          tar -czf weechat-linux.tar.gz weechat
 
-      - name: Upload Ubuntu artefact
+      - name: Upload Linux artefact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weechat-ubuntu
-          path: $HOME/.local/bin/weechat-ubuntu.tar.gz
+          name: weechat-linux
+          path: $HOME/.local/bin/weechat-linux.tar.gz
 
   # -------------------------------------------------
-  # Windows (MSYS2)
+  # Windows – MSYS2 (MinGW‑64)
   # -------------------------------------------------
   msys2:
     runs-on: windows-latest
@@ -99,41 +86,40 @@ jobs:
             mingw-w64-x86_64-cjson
             mingw-w64-x86_64-gettext
             mingw-w64-x86_64-ruby
-            base-devel
-            git
+            base-devel git
 
-      - name: Build static WeeChat
+      - name: Build static WeeChat (Windows)
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
         run: |
+          # 使用 MSYS2/MinGW‑64 的 Makefiles 生成器
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
-          cmake .. \
+          cmake .. -G "MSYS Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DENABLE_STATIC=ON \
             -DBUILD_SHARED_LIBS=OFF \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF \
-            -DENABLE_ALIAS=OFF \
-            -DENABLE_PERL=OFF \
-            -DENABLE_PHP=OFF \
-            -DENABLE_TCL=OFF \
-            -DENABLE_TK=OFF
+            -DBUILD_SHARED_PLUGINS=OFF \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
+            -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
+            -DENABLE_PLUGIN_ASPELL=OFF -DENABLE_PLUGIN_BUFFERS=OFF \
+            -DENABLE_PLUGIN_CHARSET=OFF -DENABLE_PLUGIN_SCRIPT=OFF \
+            -DENABLE_PLUGIN_TRIGGER=OFF
           make -j$(nproc)
           make install
 
-      - name: Archive binary
+      - name: Archive Windows binary
         if: always()
         run: |
           cd $HOME/.local/bin
-          tar -czf weechat-msys2.tar.gz weechat
+          tar -czf weechat-windows.tar.gz weechat
 
-      - name: Upload MSYS2 artefact
+      - name: Upload Windows artefact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weechat-msys2
-          path: $HOME/.local/bin/weechat-msys2.tar.gz
+          name: weechat-windows
+          path: $HOME/.local/bin/weechat-windows.tar.gz
