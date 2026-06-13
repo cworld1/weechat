@@ -11,35 +11,41 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: bash
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install MSYS2 packages
-        run: |
-          pacman -Syuu --noconfirm
-          pacman -S --noconfirm \
-            mingw-w64-x86_64-gcc \
-            mingw-w64-x86_64-cmake \
-            mingw-w64-x86_64-pkgconf \
-            mingw-w64-x86_64-ncurses \
-            mingw-w64-x86_64-libcurl \
-            mingw-w64-x86_64-libgcrypt \
-            mingw-w64-x86_64-gnutls \
-            mingw-w64-x86_64-zlib \
-            mingw-w64-x86_64-libtool \
-            git base-devel
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-ncurses
+            mingw-w64-x86_64-libcurl
+            mingw-w64-x86_64-libgcrypt
+            mingw-w64-x86_64-gnutls
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-libtool
+            mingw-w64-x86_64-cjson   # ← 提供 libcjson
+            git
+            base-devel
 
-      - name: Build static WeeChat
+      - name: Build static WeeChat (MSYS2)
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
         run: |
-          export MSYSTEM=MINGW64
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/.local -DENABLE_STATIC=ON -DENABLE_MAN=OFF -DENABLE_DOC=OFF
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF
           make -j$(nproc)
           make install
 
@@ -48,15 +54,13 @@ jobs:
         run: |
           cd $HOME/.local/bin
           tar -czf weechat-msys2.tar.gz weechat
-        continue-on-error: true
 
-      - name: Upload artifact
+      - name: Upload artifact (MSYS2)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: weechat-msys2
-          path: ${{ runner.temp }}/.local/bin/weechat-msys2.tar.gz
-          # The path works because the previous step ran inside $HOME/.local/bin
+          path: $HOME/.local/bin/weechat-msys2.tar.gz
 
   # ── Ubuntu / Bookworm ───────────────────────────────────────
   ubuntu:
@@ -64,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Ubuntu build dependencies
+      - name: Install Ubuntu dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -77,9 +81,10 @@ jobs:
             libgnutls28-dev \
             zlib1g-dev \
             libtool \
+            libcjson-dev      # ← 必须的 libcjson 包
             git
 
-      - name: Build static WeeChat
+      - name: Build static WeeChat (Ubuntu)
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -87,7 +92,12 @@ jobs:
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/.local -DENABLE_STATIC=ON -DENABLE_MAN=OFF -DENABLE_DOC=OFF
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF
           make -j$(nproc)
           make install
 
@@ -97,7 +107,7 @@ jobs:
           cd $HOME/.local/bin
           tar -czf weechat-ubuntu.tar.gz weechat
 
-      - name: Upload artifact
+      - name: Upload artifact (Ubuntu)
         if: always()
         uses: actions/upload-artifact@v4
         with:
