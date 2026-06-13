@@ -22,12 +22,13 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-ncurses
-            mingw-w64-x86_64-libcurl
+            mingw-w64-x86_64-curl
             mingw-w64-x86_64-libgcrypt
             mingw-w64-x86_64-gnutls
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-libtool
             mingw-w64-x86_64-cjson
+            mingw-w64-x86_64-gettext
             base-devel
             git
 
@@ -80,6 +81,7 @@ jobs:
             zlib1g-dev \
             libtool \
             libcjson-dev \
+            gettext \
             git
 
       - name: Build static WeeChat
