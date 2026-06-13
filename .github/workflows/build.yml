@@ -30,7 +30,6 @@ jobs:
             mingw-w64-x86_64-cjson
             mingw-w64-x86_64-gettext
             mingw-w64-x86_64-ruby
-            mingw-w64-x86_64-perl
             base-devel
             git
 
@@ -46,6 +45,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
             -DENABLE_STATIC=ON \
+            -DENABLE_PERL=OFF \
+            -DENABLE_PHP=OFF \
             -DENABLE_MAN=OFF \
             -DENABLE_DOC=OFF
           make -j$(nproc)
@@ -85,9 +86,6 @@ jobs:
             gettext \
             tcl-dev \
             tk-dev \
-            php-dev \
-            perl \
-            libperl-dev \
             git
 
       - name: Build static WeeChat
@@ -102,6 +100,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=$HOME/.local \
             -DENABLE_STATIC=ON \
+            -DENABLE_PERL=OFF \
+            -DENABLE_PHP=OFF \
             -DENABLE_MAN=OFF \
             -DENABLE_DOC=OFF
           make -j$(nproc)
