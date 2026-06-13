@@ -1,0 +1,104 @@
+name: Build static WeeChat
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: msys2
+          - os: ubuntu-22.04   # 22.04 ships Bookworm‑compatible toolchain
+            platform: ubuntu
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install MSYS2 packages (mingw64)
+        if: matrix.platform == 'msys2'
+        shell: bash
+        run: |
+          pacman -Syuu --noconfirm
+          pacman -S --noconfirm \
+            mingw-w64-x86_64-gcc \
+            mingw-w64-x86_64-cmake \
+            mingw-w64-x86_64-pkgconf \
+            mingw-w64-x86_64-ncurses \
+            mingw-w64-x86_64-libcurl \
+            mingw-w64-x86_64-libgcrypt \
+            mingw-w64-x86_64-gnutls \
+            mingw-w64-x86_64-zlib \
+            mingw-w64-x86_64-libtool \
+            git base-devel
+
+      - name: Build static WeeChat (MSYS2)
+        if: matrix.platform == 'msys2'
+        shell: bash
+        env:
+          CFLAGS: "-static -O2"
+          LDFLAGS: "-static"
+        run: |
+          export MSYSTEM=MINGW64
+          git clone https://github.com/weechat/weechat.git
+          cd weechat
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF
+          make -j$(nproc)
+          make install
+
+
+      - name: Install Ubuntu build dependencies
+        if: matrix.platform == 'ubuntu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            pkg-config \
+            libncurses5-dev \
+            libcurl4-openssl-dev \
+            libgcrypt20-dev \
+            libgnutls28-dev \
+            zlib1g-dev \
+            libtool \
+            git
+
+      - name: Build static WeeChat (Ubuntu)
+        if: matrix.platform == 'ubuntu'
+        env:
+          CFLAGS: "-static -O2"
+          LDFLAGS: "-static"
+        run: |
+          git clone https://github.com/weechat/weechat.git
+          cd weechat
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
+            -DENABLE_STATIC=ON \
+            -DENABLE_MAN=OFF \
+            -DENABLE_DOC=OFF
+          make -j$(nproc)
+          make install
+
+      - name: Archive binaries
+        if: always()
+        run: |
+          tar -czf weechat-${{ matrix.platform }}.tar.gz -C $HOME/.local/bin weechat
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weechat-${{ matrix.platform }}
+          path: weechat-${{ matrix.platform }}.tar.gz
