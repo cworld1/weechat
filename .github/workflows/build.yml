@@ -30,6 +30,7 @@ jobs:
             mingw-w64-x86_64-cjson
             mingw-w64-x86_64-gettext
             mingw-w64-x86_64-ruby
+            mingw-w64-x86_64-perl
             base-devel
             git
 
@@ -85,6 +86,8 @@ jobs:
             tcl-dev \
             tk-dev \
             php-dev \
+            perl \
+            libperl-dev \
             git
 
       - name: Build static WeeChat
