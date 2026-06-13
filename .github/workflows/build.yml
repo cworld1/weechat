@@ -2,28 +2,20 @@ name: Build static WeeChat
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            platform: msys2
-          - os: ubuntu-22.04   # 22.04 ships Bookworm‑compatible toolchain
-            platform: ubuntu
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install MSYS2 packages (mingw64)
-        if: matrix.platform == 'msys2'
+  # ── Windows / MSYS2 ───────────────────────────────────────
+  msys2:
+    runs-on: windows-latest
+    defaults:
+      run:
         shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MSYS2 packages
         run: |
           pacman -Syuu --noconfirm
           pacman -S --noconfirm \
@@ -38,9 +30,7 @@ jobs:
             mingw-w64-x86_64-libtool \
             git base-devel
 
-      - name: Build static WeeChat (MSYS2)
-        if: matrix.platform == 'msys2'
-        shell: bash
+      - name: Build static WeeChat
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -49,18 +39,32 @@ jobs:
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DENABLE_STATIC=ON \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/.local -DENABLE_STATIC=ON -DENABLE_MAN=OFF -DENABLE_DOC=OFF
           make -j$(nproc)
           make install
 
+      - name: Archive binary
+        if: always()
+        run: |
+          cd $HOME/.local/bin
+          tar -czf weechat-msys2.tar.gz weechat
+        continue-on-error: true
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weechat-msys2
+          path: ${{ runner.temp }}/.local/bin/weechat-msys2.tar.gz
+          # The path works because the previous step ran inside $HOME/.local/bin
+
+  # ── Ubuntu / Bookworm ───────────────────────────────────────
+  ubuntu:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Install Ubuntu build dependencies
-        if: matrix.platform == 'ubuntu'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -75,8 +79,7 @@ jobs:
             libtool \
             git
 
-      - name: Build static WeeChat (Ubuntu)
-        if: matrix.platform == 'ubuntu'
+      - name: Build static WeeChat
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -84,21 +87,19 @@ jobs:
           git clone https://github.com/weechat/weechat.git
           cd weechat
           mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DENABLE_STATIC=ON \
-            -DENABLE_MAN=OFF \
-            -DENABLE_DOC=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/.local -DENABLE_STATIC=ON -DENABLE_MAN=OFF -DENABLE_DOC=OFF
           make -j$(nproc)
           make install
 
-      - name: Archive binaries
+      - name: Archive binary
         if: always()
         run: |
-          tar -czf weechat-${{ matrix.platform }}.tar.gz -C $HOME/.local/bin weechat
+          cd $HOME/.local/bin
+          tar -czf weechat-ubuntu.tar.gz weechat
+
       - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: weechat-${{ matrix.platform }}
-          path: weechat-${{ matrix.platform }}.tar.gz
+          name: weechat-ubuntu
+          path: $HOME/.local/bin/weechat-ubuntu.tar.gz
