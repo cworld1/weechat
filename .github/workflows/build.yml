@@ -6,7 +6,6 @@ on:
   pull_request:
 
 jobs:
-  # ── Windows / MSYS2 ───────────────────────────────────────
   msys2:
     runs-on: windows-latest
     defaults:
@@ -15,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up MSYS2
+      - name: Install MSYS2 packages
         uses: msys2/setup-msys2@v2
         with:
           install: >-
@@ -28,11 +27,11 @@ jobs:
             mingw-w64-x86_64-gnutls
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-libtool
-            mingw-w64-x86_64-cjson   # ← 提供 libcjson
-            git
+            mingw-w64-x86_64-cjson
             base-devel
+            git
 
-      - name: Build static WeeChat (MSYS2)
+      - name: Build static WeeChat
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -55,14 +54,13 @@ jobs:
           cd $HOME/.local/bin
           tar -czf weechat-msys2.tar.gz weechat
 
-      - name: Upload artifact (MSYS2)
+      - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: weechat-msys2
           path: $HOME/.local/bin/weechat-msys2.tar.gz
 
-  # ── Ubuntu / Bookworm ───────────────────────────────────────
   ubuntu:
     runs-on: ubuntu-22.04
     steps:
@@ -81,10 +79,10 @@ jobs:
             libgnutls28-dev \
             zlib1g-dev \
             libtool \
-            libcjson-dev      # ← 必须的 libcjson 包
+            libcjson-dev \
             git
 
-      - name: Build static WeeChat (Ubuntu)
+      - name: Build static WeeChat
         env:
           CFLAGS: "-static -O2"
           LDFLAGS: "-static"
@@ -107,7 +105,7 @@ jobs:
           cd $HOME/.local/bin
           tar -czf weechat-ubuntu.tar.gz weechat
 
-      - name: Upload artifact (Ubuntu)
+      - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
