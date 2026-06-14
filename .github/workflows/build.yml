@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev debhelper dh-autoreconf devscripts \
-            pkg-config pkgconf git build-essential \
+            pkgconf git build-essential \
             libncursesw5-dev libgcrypt20-dev \
             libssl-dev libjansson-dev libcurl4-gnutls-dev \
             libzstd-dev libgettextpo-dev libxml2-dev \
