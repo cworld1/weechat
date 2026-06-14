@@ -47,6 +47,6 @@ jobs:
         with:
           name: weechat-deb
           path: |
-            *.deb
-            *.changes
-            *.buildinfo
+            ../*.deb
+            ../*.changes
+            ../*.buildinfo
