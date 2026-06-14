@@ -17,23 +17,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev debhelper dh-autoreconf \
+          sudo apt-get install -y dpkg-dev debhelper dh-autoreconf devscripts \
             pkg-config git build-essential \
             libncursesw5-dev libgcrypt20-dev \
             libssl-dev libjansson-dev libcurl4-gnutls-dev \
             libzstd-dev libgettextpo-dev libxml2-dev \
             libperl-dev python3-dev ruby-dev tcl-dev \
-            liblua5.3-dev libpython3-dev \
-            libaspell-dev libenchant-2-dev \
-            libgtk-3-dev libv8-dev \
-            devscripts \
+            liblua5.3-dev libpython3-dev liblua5.4-dev \
+            libaspell-dev libenchant-2-dev libgtk-3-dev libv8-dev \
             asciidoctor ruby-pygments.rb cmake \
-            liblua5.4-dev guile-3.0-dev php-dev libphp-embed \
-            libargon2-dev libsodium-dev libgnutls28-dev libcjson-dev
+            guile-3.0-dev php-dev libphp-embed \
+            libargon2-dev libsodium-dev libgnutls28-dev libcjson-dev \
+            pkgconf
 
       - name: Build Debian packages
         env:
@@ -41,7 +39,7 @@ jobs:
           DISTRO: debian/bookworm
         run: |
           chmod +x ./tools/build_debian.sh
-          ./tools/build_debian.sh "${VERSION}" "${DISTRO}"
+          ./tools/build_debian.sh "${VERSION}" "${DISTRO}" -d
 
       - name: Upload Debian packages as artifacts
         uses: actions/upload-artifact@v4
