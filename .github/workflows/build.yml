@@ -37,7 +37,7 @@ jobs:
           VERSION: stable
           DISTRO: debian/bookworm
         run: |
-          chmod +x ./build_debian.sh
+          chmod +x ./tools/build_debian.sh
           ./build_debian.sh "${VERSION}" "${DISTRO}"
 
       - name: Upload Debian packages as artifacts
