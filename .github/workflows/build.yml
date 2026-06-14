@@ -1,131 +1,53 @@
-# .github/workflows/build‑weechat.yml
-name: Build static WeeChat (Linux & Windows)
+name: Build WeeChat Debian packages
 
 on:
   push:
-    branches: [main]
-  pull_request:
+    branches: [ '**' ]
+  workflow_dispatch:
 
 jobs:
-  # -------------------------------------------------
-  # Linux – Ubuntu 24.04 (Debian Bookworm)
-  # -------------------------------------------------
-  ubuntu:
-    runs-on: ubuntu-24.04
+  build-debian:
+    runs-on: ubuntu-22.04
+    env:
+      PACKAGER_NAME: ${{ secrets.PACKAGER_NAME || 'GitHub Actions' }}
+      PACKAGER_EMAIL: ${{ secrets.PACKAGER_EMAIL || 'actions@github.com' }}
+      JOBS: auto
+      RETRY_BUILD: 0
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Install Ubuntu dependencies
+      - name: Install build dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y \
-            build-essential cmake pkg-config \
-            libncurses-dev libcurl4-gnutls-dev libgcrypt20-dev \
-            libgnutls28-dev zlib1g-dev libtool libcjson-dev \
-            gettext tcl-dev tk-dev php-dev libperl-dev git
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev debhelper dh-autoreconf \
+                                  pkg-config git build-essential \
+                                  libncursesw5-dev libgcrypt20-dev \
+                                  libssl-dev libjansson-dev libcurl4-gnutls-dev \
+                                  libzstd-dev libgettextpo-dev libxml2-dev \
+                                  libperl-dev python3-dev ruby-dev tcl-dev \
+                                  liblua5.3-dev libpython3-dev libperl-dev \
+                                  libphp7.4-dev libqt5svg5-dev \
+                                  libaspell-dev libenchant-2-dev \
+                                  libgtk-3-dev libv8-dev
+          sudo apt-get install -y devscripts
 
-      - name: Build static WeeChat (Linux)
+      - name: Build Debian packages
         env:
-          CFLAGS: "-static -O2"
-          LDFLAGS: "-static"
+          VERSION: stable
+          DISTRO: debian/bookworm
         run: |
-          git clone https://github.com/weechat/weechat.git
-          cd weechat
-          mkdir build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DENABLE_STATIC=ON \
-            -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
-            -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_BUFLIST=OFF \
-            -DENABLE_PLUGIN_CHARSET=OFF \
-            -DENABLE_PLUGIN_SCRIPT=OFF \
-            -DENABLE_PLUGIN_TRIGGER=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF \
-            -DENABLE_PLUGIN_BUFFERS=OFF
-          make -j$(nproc)
-          make install
+          chmod +x ./build_debian.sh
+          ./build_debian.sh "${VERSION}" "${DISTRO}"
 
-      - name: Archive Linux binary
-        if: always()
-        run: |
-          cd $HOME/.local/bin
-          tar -czf weechat-linux.tar.gz weechat
-
-      - name: Upload Linux artefact
-        if: always()
+      - name: Upload Debian packages as artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: weechat-linux
-          path: $HOME/.local/bin/weechat-linux.tar.gz
-
-  # -------------------------------------------------
-  # Windows – MSYS2 (POSIX layer, not MinGW)
-  # -------------------------------------------------
-  msys2:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@v4
-
-      # Install the POSIX toolchain (gcc, make, etc.) inside the MSYS environment
-      - name: Install MSYS2 packages (POSIX toolchain)
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MSYS
-          install: >-
-            base-devel          # gcc, make, autoconf, …
-            gcc
-            cmake
-            pkgconf
-            ncurses
-            curl
-            libgcrypt
-            gnutls
-            zlib
-            libtool
-            cjson
-            gettext
-            ruby
-            git
-
-      - name: Build static WeeChat (Windows / MSYS2)
-        env:
-          CFLAGS: "-static -O2"
-          LDFLAGS: "-static"
-        run: |
-          git clone https://github.com/weechat/weechat.git
-          cd weechat
-          mkdir build && cd build
-          cmake .. -G "MSYS Makefiles" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=$HOME/.local \
-            -DBUILD_SHARED_LIBS=OFF \
-            -DENABLE_STATIC=ON \
-            -DENABLE_MAN=OFF -DENABLE_DOC=OFF -DENABLE_ALIAS=OFF \
-            -DENABLE_PERL=OFF -DENABLE_PHP=OFF -DENABLE_TCL=OFF -DENABLE_TK=OFF \
-            -DENABLE_PLUGIN_BUFLIST=OFF \
-            -DENABLE_PLUGIN_CHARSET=OFF \
-            -DENABLE_PLUGIN_SCRIPT=OFF \
-            -DENABLE_PLUGIN_TRIGGER=OFF \
-            -DENABLE_PLUGIN_ASPELL=OFF \
-            -DENABLE_PLUGIN_BUFFERS=OFF
-          make -j$(nproc)
-          make install
-
-      - name: Archive Windows binary
-        if: always()
-        run: |
-          cd $HOME/.local/bin
-          tar -czf weechat-windows.tar.gz weechat
-
-      - name: Upload Windows artefact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: weechat-windows
-          path: $HOME/.local/bin/weechat-windows.tar.gz
+          name: weechat-deb
+          path: |
+            *.deb
+            *.buildinfo
+            *.changes
