@@ -31,7 +31,7 @@ jobs:
             libaspell-dev libenchant-2-dev \
             libgtk-3-dev libv8-dev \
             devscripts \
-            asciidoctor ruby-pygments.rb cmake pkgconf \
+            asciidoctor ruby-pygments.rb cmake \
             liblua5.4-dev guile-3.0-dev php-dev libphp-embed \
             libargon2-dev libsodium-dev libgnutls28-dev libcjson-dev
 
