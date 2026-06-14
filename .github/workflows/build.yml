@@ -42,11 +42,13 @@ jobs:
           chmod +x ./tools/build_debian.sh
           ./tools/build_debian.sh "${VERSION}" "${DISTRO}" -d
 
+      - name: Collect built packages
+        run: |
+          mkdir -p artifacts
+          mv ../*.deb ../*.changes ../*.buildinfo artifacts/ || true
+
       - name: Upload Debian packages as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: weechat-deb
-          path: |
-            ../*.deb
-            ../*.changes
-            ../*.buildinfo
+          path: artifacts/*
